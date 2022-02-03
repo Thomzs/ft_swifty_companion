@@ -63,11 +63,11 @@ class Storage {
     if (expiresIn != null) {
       return expiresIn;
     } else {
-      var tmp = await flutterSecureStorage.read(key: 'expires');
+      var tmp = await flutterSecureStorage.read(key: 'expiresIn');
       if (tmp == null) return null;
       int tmp2 = int.parse(tmp);
       expiresIn = DateTime.fromMillisecondsSinceEpoch(tmp2);
-      return accessToken;
+      return expiresIn;
     }
   }
 
@@ -161,15 +161,22 @@ class ClientApi {
     }
   }
 
-  Future<Map> get(String url) async {
+  Future<Map?> get(String url) async {
     if (!await checkTokenLife()) {
       refreshToken();
     }
-    final response = await storage.client.get(Uri.parse(url), headers: {
-      HttpHeaders.authorizationHeader: storage.accessToken
-    });
+    try {
+      String? token = await storage.getAccessToken();
+      if (token == null) return null;
+      final response = await storage.client.get(Uri.parse(url), headers: {
+        'Authorization': 'Bearer $token'
+      });
 
-    return json.decode(response.body);
+      return json.decode(response.body);
+    } catch (e) {
+      log(e.toString());
+      return null;
+    }
   }
   
   Future<bool> checkTokenLife() async {
