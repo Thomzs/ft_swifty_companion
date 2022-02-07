@@ -6,11 +6,6 @@ import 'package:flutter/material.dart';
 import 'package:swifty_companion/utils.dart';
 import 'package:swifty_companion/clientApi.dart';
 
-import 'charts.dart';
-
-
-import 'package:swifty_companion/charts.dart';
-
 
 class MyHomePage extends StatefulWidget {
   const MyHomePage({Key? key}) : super(key: key);
@@ -30,6 +25,7 @@ class _MyHomePageState extends State<MyHomePage> {
   final List<String> _names = [];
   final List<double> _levels = [];
   final _skills = [];
+  final _projects = [];
 
 
 
@@ -62,6 +58,7 @@ class _MyHomePageState extends State<MyHomePage> {
       _names.clear();
       _levels.clear();
       _skills.clear();
+      _projects.clear();
       var rCourse;
 
       for (var course in _me['cursus_users']) {
@@ -76,6 +73,11 @@ class _MyHomePageState extends State<MyHomePage> {
           _levels.add(skill['level']);
           _names.add(skill['name']);
           _skills.add(skill);
+        }
+      }
+      for (var project in _me['projects_users']) {
+        if ((project['cursus_ids'] as List).contains(rCourse['cursus_id'])) {
+          _projects.add(project);
         }
       }
     }
@@ -143,137 +145,174 @@ class _MyHomePageState extends State<MyHomePage> {
                                         minHeight: constraints.minHeight,
                                       ),
                                       child: Column(
-                                          crossAxisAlignment: CrossAxisAlignment.center,
-                                          children: [
-                                            const SizedBox(
-                                              height: 10.0,
+                                        crossAxisAlignment: CrossAxisAlignment.center,
+                                        children: [
+                                          const SizedBox(
+                                            height: 10.0,
+                                          ),
+                                          CircleAvatar(
+                                            radius: 56,
+                                            backgroundImage: NetworkImage(_me['image_url']),
+                                          ),
+                                          const SizedBox(
+                                            height: 12.0,
+                                          ),
+                                          Text(
+                                            _me['displayname'],
+                                            style: const TextStyle(
+                                                color: Colors.white,
+                                                fontWeight: FontWeight.bold,
+                                                fontSize: 18
                                             ),
-                                            CircleAvatar(
-                                              radius: 56,
-                                              backgroundImage: NetworkImage(_me['image_url']),
+                                          ),
+                                          const SizedBox(
+                                            height: 3.0,
+                                          ),
+                                          Text(
+                                            '@' + _me['login'],
+                                            style: const TextStyle(
+                                                color: Colors.grey,
+                                                fontWeight: FontWeight.w400,
+                                                fontSize: 16
                                             ),
-                                            const SizedBox(
-                                              height: 12.0,
+                                          ),
+                                          const SizedBox(
+                                            height: 3.0,
+                                          ),
+                                          Text(
+                                            _me['phone'] != null ? 'phone: ' + _me['phone'] : 'null',
+                                            style: const TextStyle(
+                                                color: Colors.grey,
+                                                fontWeight: FontWeight.w400,
+                                                fontSize: 16
                                             ),
-                                            Text(
-                                              _me['displayname'],
-                                              style: const TextStyle(
-                                                  color: Colors.white,
-                                                  fontWeight: FontWeight.bold,
-                                                  fontSize: 18
-                                              ),
-                                            ),
-                                            const SizedBox(
-                                              height: 3.0,
-                                            ),
-                                            Text(
-                                              '@' + _me['login'],
-                                              style: const TextStyle(
-                                                  color: Colors.grey,
-                                                  fontWeight: FontWeight.w400,
-                                                  fontSize: 16
-                                              ),
-                                            ),
-                                            const SizedBox(
-                                              height: 3.0,
-                                            ),
-                                            Text(
-                                              _me['phone'] != null ? 'phone: ' + _me['phone'] : 'null',
-                                              style: const TextStyle(
-                                                  color: Colors.grey,
-                                                  fontWeight: FontWeight.w400,
-                                                  fontSize: 16
-                                              ),
-                                            ),
-                                            const SizedBox(
-                                              height: 20.0,
-                                            ),
-                                            Row(
-                                                mainAxisAlignment: MainAxisAlignment.center,
-                                                crossAxisAlignment: CrossAxisAlignment.center,
-                                                children: [
-                                                  for (var cursus in _me['cursus_users'])
-                                                    statWidget(cursus['cursus']['name'], 'lvl: ' + cursus['level'].toString())
-                                                ]
-                                            ),
-                                            const SizedBox(
-                                              height: 9.0,
-                                            ),
-                                            Row(
-                                                mainAxisAlignment: MainAxisAlignment.center,
-                                                crossAxisAlignment: CrossAxisAlignment.center,
-                                                children: [
-                                                  statWidget("Correction point(s)", _me['correction_point'].toString()),
-                                                  Expanded(
-                                                      child: IntrinsicHeight(
-                                                          child: Row(
-                                                              mainAxisAlignment: MainAxisAlignment.start,
-                                                              crossAxisAlignment: CrossAxisAlignment.center,
-                                                              children: [
-                                                                const VerticalDivider(
-                                                                  thickness: 1,
-                                                                  color: Colors.white,
-                                                                ),
-                                                                const SizedBox(
-                                                                  width: 12.0,
-                                                                ),
-                                                                Container(
-                                                                    child: getLocationColor()
-                                                                ),
-                                                                const SizedBox(
-                                                                  width: 9.0,
-                                                                ),
-                                                                Text(
-                                                                    _me['location'] != null ? _me['location']['host'] : 'Unavailable',
-                                                                    overflow: TextOverflow.ellipsis,
-                                                                    style: const TextStyle(
-                                                                        fontWeight: FontWeight.bold,
-                                                                        fontSize: 16.0,
-                                                                        color: Colors.white70
-                                                                    )
-                                                                )
-                                                              ]
-                                                          )
-                                                      )
+                                          ),
+                                          const SizedBox(
+                                            height: 20.0,
+                                          ),
+                                          Row(
+                                              mainAxisAlignment: MainAxisAlignment.center,
+                                              crossAxisAlignment: CrossAxisAlignment.center,
+                                              children: [
+                                                for (var cursus in _me['cursus_users'])
+                                                  statWidget(cursus['cursus']['name'], 'lvl: ' + cursus['level'].toString())
+                                              ]
+                                          ),
+                                          const SizedBox(
+                                            height: 9.0,
+                                          ),
+                                          Row(
+                                              mainAxisAlignment: MainAxisAlignment.center,
+                                              crossAxisAlignment: CrossAxisAlignment.center,
+                                              children: [
+                                                statWidget("Correction point(s)", _me['correction_point'].toString()),
+                                                Expanded(
+                                                    child: IntrinsicHeight(
+                                                        child: Row(
+                                                            mainAxisAlignment: MainAxisAlignment.start,
+                                                            crossAxisAlignment: CrossAxisAlignment.center,
+                                                            children: [
+                                                              const VerticalDivider(
+                                                                thickness: 1,
+                                                                color: Colors.white,
+                                                              ),
+                                                              const SizedBox(
+                                                                width: 12.0,
+                                                              ),
+                                                              Container(
+                                                                  child: getLocationColor()
+                                                              ),
+                                                              const SizedBox(
+                                                                width: 9.0,
+                                                              ),
+                                                              Text(
+                                                                  _me['location'] != null ? _me['location']['host'] : 'Unavailable',
+                                                                  overflow: TextOverflow.ellipsis,
+                                                                  style: const TextStyle(
+                                                                      fontWeight: FontWeight.bold,
+                                                                      fontSize: 16.0,
+                                                                      color: Colors.white70
+                                                                  )
+                                                              )
+                                                            ]
+                                                        )
+                                                    )
+                                                )
+                                              ]
+                                          ),
+                                          const SizedBox(
+                                            height: 8,
+                                          ),
+                                          Column(
+                                            crossAxisAlignment: CrossAxisAlignment.center,
+                                            children: <Widget>[
+                                              const Text(
+                                                  'Skills',
+                                                  style: TextStyle(
+                                                      fontWeight: FontWeight.bold,
+                                                      fontSize: 16.0,
+                                                      color: Colors.white70
                                                   )
-                                                ]
-                                            ),
-                                            const SizedBox(
-                                              height: 8,
-                                            ),
-                                            AspectRatio(
-                                              aspectRatio: 1,
-                                              child: Column(
-                                                crossAxisAlignment: CrossAxisAlignment.center,
-                                                children: <Widget>[
-                                                  const Text(
-                                                      'Skills',
-                                                      style: TextStyle(
-                                                          fontWeight: FontWeight.bold,
-                                                          fontSize: 16.0,
-                                                          color: Colors.white70
-                                                      )
+                                              ),
+                                              const SizedBox(
+                                                height: 4,
+                                              ),
+                                              SizedBox(
+                                                height: 200,
+                                                child: Padding(
+                                                  padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                                                  child: BarChart(
+                                                    mainBarData(),
+                                                    swapAnimationDuration: animDuration,
                                                   ),
-                                                  const SizedBox(
-                                                    height: 4,
-                                                  ),
-                                                  SizedBox(
-                                                    height: 200,
-                                                    child: Padding(
-                                                      padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                                                      child: BarChart(
-                                                        mainBarData(),
-                                                        swapAnimationDuration: animDuration,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                          const SizedBox(
+                                            height: 8,
+                                          ),
+                                          for (var project in _projects)
+                                            SizedBox(
+                                                height: 25,
+                                                child:
+                                                Row(
+                                                  crossAxisAlignment: CrossAxisAlignment.center,
+                                                  children: [
+                                                    Expanded(
+                                                      flex: 6,
+                                                      child: Center(
+                                                        child: Text(
+                                                          (project['project']['name'] as String).useCorrectEllipsis(),
+                                                          maxLines: 1,
+                                                          style: const TextStyle(
+                                                              fontWeight: FontWeight.w400,
+                                                              fontSize: 14.0,
+                                                              color: Colors.white70
+                                                          ),
+                                                        ),
                                                       ),
                                                     ),
-                                                  ),
-                                                  const SizedBox(
-                                                    height: 12,
-                                                  ),
-                                                ],
-                                              ),
-                                            ),
-                                          ]
+                                                ClipOval(
+                                                        child: Container(
+                                                          color: project['validated?'] != null && project['validated?'] == true ?
+                                                          Colors.green : project['status'] == 'finished' ? Colors.red : Colors.orange,
+                                                          width: 10,
+                                                          height: 10,
+                                                        ),
+                                                    ),
+                                                      Expanded(
+                                                        flex: 2,
+                                                        child: Center(
+                                                          child: Text(
+                                                            project['final_mark'] != null ? project['final_mark'].toString() : 'In progress'
+                                                          ),
+                                                      ),
+                                                    ),
+                                                  ],
+                                                )
+                                            )
+                                        ],
                                       )
                                   )
                                 ]
