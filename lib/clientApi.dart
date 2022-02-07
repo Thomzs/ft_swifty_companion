@@ -89,8 +89,6 @@ class ClientApi {
   final coolDown = 1;
   DateTime? _lastUpdate;
 
-  Map? tmp;
-
   final storage = Storage();
 
   Future<bool> authenticate(result) async {
@@ -161,13 +159,13 @@ class ClientApi {
           DateTime.now().add(Duration(seconds: body['expires_in'])));
       storage.setLogin(true);
       return true;
-    } catch (e) {
+    } on Exception catch (e) {
       return false;
     }
   }
 
-  Future<Map?> get(String url) async {
-    if (_lastUpdate != null && _lastUpdate!.isAfter(DateTime.now().subtract(Duration(seconds: coolDown)))) return tmp; //Delay one update max per second
+  Future<dynamic> get(String url) async {
+    if (_lastUpdate != null && _lastUpdate!.isAfter(DateTime.now().subtract(Duration(seconds: coolDown)))) return null; //Delay one update max per second
     _lastUpdate = DateTime.now();
 
     if (!await checkTokenLife()) {
@@ -179,9 +177,9 @@ class ClientApi {
       final response = await storage.client.get(Uri.parse(url), headers: {
         'Authorization': 'Bearer $token'
       });
-      tmp = jsonDecode(response.body);
+      var tmp = jsonDecode(response.body);
       return tmp;
-    } catch (e) {
+    } on Exception catch (e) {
       log(e.toString());
       return null;
     }

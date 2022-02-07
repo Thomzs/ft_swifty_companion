@@ -66,6 +66,7 @@ class _LoginPageState extends State<LoginPage> {
           ],
         ),
       ),
+      bottomNavigationBar: null,
     );
   }
 
