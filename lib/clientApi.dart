@@ -49,7 +49,7 @@ class Storage {
       return refreshToken;
     } else {
       refreshToken = await flutterSecureStorage.read(key: 'refreshToken');
-      return accessToken;
+      return refreshToken;
     }
   }
 
@@ -86,6 +86,10 @@ class ClientApi {
   final clientId = 'c40f23829f08538d4fe58d099ce17155fbf5115478ac0bcb674b21837895cabd';
   final clientSecret = 'ea598d6f22881a8ade6edd59f41d3e81dd1c8fab0a1e34002516dbd7ea9b3de1';
   final redirectUri = 'swifty://login/';
+  final coolDown = 1;
+  DateTime? _lastUpdate;
+
+  Map? tmp;
 
   final storage = Storage();
 
@@ -140,13 +144,14 @@ class ClientApi {
 
   Future<bool> refreshToken() async {
     try {
+      final rt = await storage.getRefreshToken();
       final response = await storage.client.post(
           Uri.parse('https://api.intra.42.fr/oauth/token'), body: {
         'client_id': clientId,
         'redirect_uri': redirectUri,
-        'response_type': 'refresh_token',
+        'grant_type': 'refresh_token',
         'client_secret': clientSecret,
-        'refresh_token': await storage.getRefreshToken()
+        'refresh_token': rt
       });
 
       var body = jsonDecode(response.body);
@@ -162,6 +167,9 @@ class ClientApi {
   }
 
   Future<Map?> get(String url) async {
+    if (_lastUpdate != null && _lastUpdate!.isAfter(DateTime.now().subtract(Duration(seconds: coolDown)))) return tmp; //Delay one update max per second
+    _lastUpdate = DateTime.now();
+
     if (!await checkTokenLife()) {
       refreshToken();
     }
@@ -171,8 +179,8 @@ class ClientApi {
       final response = await storage.client.get(Uri.parse(url), headers: {
         'Authorization': 'Bearer $token'
       });
-
-      return json.decode(response.body);
+      tmp = jsonDecode(response.body);
+      return tmp;
     } catch (e) {
       log(e.toString());
       return null;
@@ -193,7 +201,7 @@ class ClientApi {
 
     storage.setLogin(false);
     if (token == null) return true;
-    if (await checkTokenLife() && !await refreshToken()) return true;
+    if (!await checkTokenLife() && !await refreshToken()) return true; //Need to log if token is not alive anymore and refreshing it failed
     storage.setLogin(true);
     return false;
   }

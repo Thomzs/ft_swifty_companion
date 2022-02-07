@@ -1,11 +1,16 @@
 import 'dart:async';
 import 'dart:developer';
 
+import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:swifty_companion/utils.dart';
-import 'package:swifty_companion/activities.dart';
 import 'package:swifty_companion/clientApi.dart';
-import 'package:charts_flutter/flutter.dart' as charts;
+
+import 'charts.dart';
+
+
+import 'package:swifty_companion/charts.dart';
+
 
 class MyHomePage extends StatefulWidget {
   const MyHomePage({Key? key}) : super(key: key);
@@ -22,6 +27,20 @@ class _MyHomePageState extends State<MyHomePage> {
   PageController pageController = PageController();
 
   var _me;
+  final List<String> _names = [];
+  final List<double> _levels = [];
+  final _skills = [];
+
+
+
+  final Color barBackgroundColor = Colors.blueGrey;
+  final Duration animDuration = const Duration(milliseconds: 250);
+
+  int touchedIndex = -1;
+
+  bool isPlaying = false;
+
+
 
   void onLogOutPressed() async {
     await ca.logout();
@@ -35,9 +54,31 @@ class _MyHomePageState extends State<MyHomePage> {
     pageController.jumpToPage(index);
   }
 
-  Future<Map?> getMe() async {
+  Future<void> getMe() async {
+
     _me = await ca.get('https://api.intra.42.fr/v2/me');
-    return _me;
+
+    if (_me != null) {
+      _names.clear();
+      _levels.clear();
+      _skills.clear();
+      var rCourse;
+
+      for (var course in _me['cursus_users']) {
+        if (course != null && course['cursus']['name'] == '42cursus') {
+          rCourse = course;
+          break;
+        }
+      }
+      if (rCourse == null) return;
+      for (var skill in rCourse['skills']) { //Only get skills > lvl 0 for readability
+        if (skill['level'] > 0) {
+          _levels.add(skill['level']);
+          _names.add(skill['name']);
+          _skills.add(skill);
+        }
+      }
+    }
   }
 
   Future<void> updateMe() async {
@@ -94,6 +135,7 @@ class _MyHomePageState extends State<MyHomePage> {
                         builder: (context, constraints) => RefreshIndicator(
                             onRefresh: updateMe,
                             child: ListView(
+                                shrinkWrap: true,
                                 children: [
                                   Container(
                                       padding: const EdgeInsets.all(20.0),
@@ -195,7 +237,42 @@ class _MyHomePageState extends State<MyHomePage> {
                                                       )
                                                   )
                                                 ]
-                                            )
+                                            ),
+                                            const SizedBox(
+                                              height: 8,
+                                            ),
+                                            AspectRatio(
+                                              aspectRatio: 1,
+                                              child: Column(
+                                                crossAxisAlignment: CrossAxisAlignment.center,
+                                                children: <Widget>[
+                                                  const Text(
+                                                      'Skills',
+                                                      style: TextStyle(
+                                                          fontWeight: FontWeight.bold,
+                                                          fontSize: 16.0,
+                                                          color: Colors.white70
+                                                      )
+                                                  ),
+                                                  const SizedBox(
+                                                    height: 4,
+                                                  ),
+                                                  SizedBox(
+                                                    height: 200,
+                                                    child: Padding(
+                                                      padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                                                      child: BarChart(
+                                                        mainBarData(),
+                                                        swapAnimationDuration: animDuration,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                  const SizedBox(
+                                                    height: 12,
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
                                           ]
                                       )
                                   )
@@ -205,7 +282,7 @@ class _MyHomePageState extends State<MyHomePage> {
                     );
                   },
                 ),
-                Container(color: Colors.orange),
+                Container(color: Colors.orange,)
               ],
             ),
             bottomNavigationBar: Container(
@@ -229,6 +306,104 @@ class _MyHomePageState extends State<MyHomePage> {
               ),
             )
         )
+    );
+  }
+
+  BarChartGroupData makeGroupData(
+      int x,
+      double y, {
+        bool isTouched = false,
+        Color barColor = Colors.white70,
+        double width = 16,
+        List<int> showTooltips = const [],
+      }) {
+    return BarChartGroupData(
+      x: x,
+      barRods: [
+        BarChartRodData(
+          y: isTouched ? y + 1 : y,
+          colors: isTouched ? [Colors.yellow] : [barColor],
+          width: width,
+          borderSide: isTouched
+              ? const BorderSide(color: Colors.yellow, width: 1)
+              : const BorderSide(color: Colors.white, width: 0),
+          backDrawRodData: BackgroundBarChartRodData(
+            show: true,
+            y: 20,
+            colors: [barBackgroundColor],
+          ),
+        ),
+      ],
+      showingTooltipIndicators: showTooltips,
+    );
+  }
+
+  List<BarChartGroupData> showingGroups() => List.generate(_names.length, (i) {
+
+    return makeGroupData(i, _levels[i], isTouched: i == touchedIndex);
+
+  });
+
+  BarChartData mainBarData() {
+    return BarChartData(
+      barTouchData: BarTouchData(
+        touchTooltipData: BarTouchTooltipData(
+            tooltipBgColor: Colors.blueGrey,
+            getTooltipItem: (group, groupIndex, rod, rodIndex) {
+              String name = _names[group.x.toInt()];
+              return BarTooltipItem(
+                name + '\n',
+                const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 18,
+                ),
+                children: <TextSpan>[
+                  TextSpan(
+                    text: (rod.y - 1).toString(),
+                    style: const TextStyle(
+                      color: Colors.yellow,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              );
+            }),
+        touchCallback: (FlTouchEvent event, barTouchResponse) {
+          setState(() {
+            if (!event.isInterestedForInteractions ||
+                barTouchResponse == null ||
+                barTouchResponse.spot == null) {
+              touchedIndex = -1;
+              return;
+            }
+            touchedIndex = barTouchResponse.spot!.touchedBarGroupIndex;
+          });
+        },
+      ),
+      titlesData: FlTitlesData(
+        show: true,
+        rightTitles: SideTitles(showTitles: false),
+        topTitles: SideTitles(showTitles: false),
+        bottomTitles: SideTitles(
+          showTitles: true,
+          getTextStyles: (context, value) => const TextStyle(
+              color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
+          margin: 16,
+          getTitles: (double value) {
+            return _names[value.toInt()][0].toUpperCase();
+          },
+        ),
+        leftTitles: SideTitles(
+          showTitles: false,
+        ),
+      ),
+      borderData: FlBorderData(
+        show: false,
+      ),
+      barGroups: showingGroups(),
+      gridData: FlGridData(show: false),
     );
   }
 }
