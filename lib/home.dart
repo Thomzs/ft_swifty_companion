@@ -1,15 +1,6 @@
-import 'dart:async';
-import 'dart:developer';
-
-import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart';
 import 'package:swifty_companion/search.dart';
-import 'package:swifty_companion/utils.dart';
 import 'package:swifty_companion/clientApi.dart';
-
-import 'Args.dart';
-import 'login.dart';
 import 'user.dart';
 
 

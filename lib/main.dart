@@ -31,13 +31,7 @@ void main() async {
 
   runApp(MaterialApp(
     title: 'Swifty Companions',
-    theme: ThemeData(
-      brightness: Brightness.light,
-      primarySwatch: white,
-    ),
-    darkTheme: ThemeData(
-      brightness: Brightness.dark,
-    ),
+    theme: ThemeData.dark(),
     home: _defaultHome,
     routes: <String, WidgetBuilder> {
       '/home': (BuildContext context) => const MyHomePage(),

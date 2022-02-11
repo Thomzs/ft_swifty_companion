@@ -37,12 +37,6 @@ class _UserState extends State<User> with AutomaticKeepAliveClientMixin<User> {
 
   bool isPlaying = false;
 
-
-  void onLogOutPressed() async {
-    await ca.logout();
-    Navigator.of(context).pop();
-  }
-
   Future<void> getUser() async {
 
     var tmp = await ca.get(args.url);
@@ -106,18 +100,22 @@ class _UserState extends State<User> with AutomaticKeepAliveClientMixin<User> {
   Widget build(BuildContext context) {
     super.build(context);
 
-    var tmp = ModalRoute.of(context)!.settings.arguments;
+    final tmp = ModalRoute.of(context)!.settings.arguments as Args?;
+
     if (tmp != null) {
-      args = tmp as Args;
+      args = tmp;
     } else {
       args = const Args('https://api.intra.42.fr/v2/me', true);
     }
 
     return Scaffold(
+        appBar: !args.self ? AppBar(
+          title: const Text('Search'),
+        ) : null,
         body: FutureBuilder(
           future: getUser(),
           builder: (context, snapshots) {
-            if (_me == null) return (const Text('AN ERROR HAS OCCURRED'));
+            if (_me == null) return (const Center(child: Text('LOADING')));
             return LayoutBuilder(
                 builder: (context, constraints) => RefreshIndicator(
                     onRefresh: updateUser,
@@ -208,10 +206,10 @@ class _UserState extends State<User> with AutomaticKeepAliveClientMixin<User> {
                                                           child: getLocationColor()
                                                       ),
                                                       const SizedBox(
-                                                        width: 9.0,
+                                                        width: 16.0,
                                                       ),
                                                       Text(
-                                                          _me['location'] != null ? _me['location']['host'] : 'Unavailable',
+                                                          _me['location'] ?? 'Unavailable',
                                                           overflow: TextOverflow.ellipsis,
                                                           style: const TextStyle(
                                                               fontWeight: FontWeight.bold,

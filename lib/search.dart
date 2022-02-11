@@ -1,8 +1,9 @@
 import 'dart:async';
 
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:swifty_companion/clientApi.dart';
+
+import 'args.dart';
 
 class Search extends StatefulWidget {
   const Search({Key? key}) : super(key: key);
@@ -14,6 +15,7 @@ class Search extends StatefulWidget {
 class _SearchState extends State<Search> with AutomaticKeepAliveClientMixin<Search> {
 
   Timer? _debounce;
+  final _controller = TextEditingController();
 
   var _search = [];
   final ClientApi ca = ClientApi();
@@ -43,12 +45,17 @@ class _SearchState extends State<Search> with AutomaticKeepAliveClientMixin<Sear
         child: Scaffold(
           appBar: AppBar(
             title: TextField(
+              controller: _controller,
               onChanged: doSearch,
               onSubmitted: (value) { FocusManager.instance.primaryFocus?.unfocus(); },
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 labelText: "Search",
                 hintText: "Search",
-                prefixIcon: Icon(Icons.search),
+                prefixIcon: const Icon(Icons.search),
+                suffixIcon: IconButton(
+                    onPressed: _controller.clear,
+                    icon: const Icon(Icons.clear)
+                )
               ),
             ),
           ),
@@ -61,7 +68,17 @@ class _SearchState extends State<Search> with AutomaticKeepAliveClientMixin<Sear
                     keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
                     itemCount: _search.length,
                     itemBuilder: (context, index) {
-                      return Card(
+                      return GestureDetector(
+                        onTap: () {
+                          String id = _search[index]['id'].toString();
+                          String url = 'https://api.intra.42.fr/v2/users/$id';
+                          Navigator.pushNamed(
+                              context,
+                              'user',
+                              arguments: Args(url, false)
+                          );
+                        },
+                          child: Card(
                           child: Padding(
                               padding: const EdgeInsets.all(16.0),
                               child: Row(
@@ -83,6 +100,7 @@ class _SearchState extends State<Search> with AutomaticKeepAliveClientMixin<Sear
                                   )
                                 ],
                               )
+                          )
                           )
                       );
                     },

@@ -107,10 +107,9 @@ class ClientApi {
         });
 
         var body = jsonDecode(response.body);
-
-        await storage.setAccessToken(body['access_token']);
-        await storage.setRefreshToken(body['refresh_token']);
-        await storage.setExpiresIn(DateTime.now().add(Duration(seconds: body['expires_in'])));
+        storage.setAccessToken(body['access_token']);
+        storage.setRefreshToken(body['refresh_token']);
+        storage.setExpiresIn(DateTime.now().add(Duration(seconds: body['expires_in'])));
         storage.setLogin(true);
         return true;
       } catch (e) {
@@ -129,7 +128,15 @@ class ClientApi {
       'scope': 'public',
       'client_secret': clientSecret
     });
-    if (!await launch(url.toString(), forceWebView: false, forceSafariVC: false)) throw 'Could not launch $url';
+    if (Platform.isIOS) {
+      if (!await launch(url.toString(),
+          forceSafariVC: false,
+          enableJavaScript: true)) throw 'Could not launch $url';
+    } else if (Platform.isAndroid) {
+      if (!await launch(url.toString(),
+          forceWebView: false,
+          enableJavaScript: true)) throw 'Could not launch $url';
+    }
   }
 
   Future<void> logout() async {
@@ -143,6 +150,8 @@ class ClientApi {
   Future<bool> refreshToken() async {
     try {
       final rt = await storage.getRefreshToken();
+
+      if (rt == null) return false;
       final response = await storage.client.post(
           Uri.parse('https://api.intra.42.fr/oauth/token'), body: {
         'client_id': clientId,
@@ -153,10 +162,9 @@ class ClientApi {
       });
 
       var body = jsonDecode(response.body);
-      await storage.setAccessToken(body['access_token']);
-      await storage.setRefreshToken(body['refresh_token']);
-      await storage.setExpiresIn(
-          DateTime.now().add(Duration(seconds: body['expires_in'])));
+      storage.setAccessToken(body['access_token']);
+      storage.setRefreshToken(body['refresh_token']);
+      storage.setExpiresIn(DateTime.now().add(Duration(seconds: body['expires_in'])));
       storage.setLogin(true);
       return true;
     } on Exception catch (e) {
