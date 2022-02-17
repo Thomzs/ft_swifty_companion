@@ -47,6 +47,7 @@ class _MyHomePageState extends State<MyHomePage> {
               ],
             ) : null,
             body: PageView(
+              physics: const NeverScrollableScrollPhysics(),
                 controller: pageController,
                 children: [
                   Navigator(

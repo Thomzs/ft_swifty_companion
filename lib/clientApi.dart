@@ -164,7 +164,13 @@ class ClientApi {
       var body = jsonDecode(response.body);
       storage.setAccessToken(body['access_token']);
       storage.setRefreshToken(body['refresh_token']);
-      storage.setExpiresIn(DateTime.now().add(Duration(seconds: body['expires_in'])));
+
+      var duration = body['expires_in'];
+      if (duration != null) {
+        storage.setExpiresIn(DateTime.now().add(Duration(seconds: body['expires_in'])));
+      } else {
+        return false;
+      }
       storage.setLogin(true);
       return true;
     } on Exception catch (e) {

@@ -7,7 +7,6 @@ import 'package:swifty_companion/utils.dart';
 import 'args.dart';
 import 'clientApi.dart';
 
-
 class User extends StatefulWidget {
   const User({Key? key}) : super(key: key);
 
@@ -25,13 +24,11 @@ class _UserState extends State<User> with AutomaticKeepAliveClientMixin<User> {
 
   late Args args;
 
-  final List<String> _names = [];
-  final List<double> _levels = [];
-  final _skills = [];
-  final _projects = [];
-
+  final List<dynamic> _courses = [];
   final Color barBackgroundColor = Colors.blueGrey;
   final Duration animDuration = const Duration(milliseconds: 250);
+
+  int selected = 0;
 
   int touchedIndex = -1;
 
@@ -43,30 +40,30 @@ class _UserState extends State<User> with AutomaticKeepAliveClientMixin<User> {
     if (tmp != null) _me = tmp;
 
     if (_me != null) {
-      _names.clear();
-      _levels.clear();
-      _skills.clear();
-      _projects.clear();
-      var rCourse;
+      _courses.clear();
 
       for (var course in _me['cursus_users']) {
-        if (course != null && course['cursus']['name'] == '42cursus') {
-          rCourse = course;
-          break;
+        var _names = [];
+        var _levels = [];
+        var _projects = [];
+
+        for (var skill in course['skills']) { //Only get skills > lvl 0 for readability
+          if (skill['level'] > 0) {
+            _levels.add(skill['level']);
+            _names.add(skill['name']);
+          }
         }
-      }
-      if (rCourse == null) return;
-      for (var skill in rCourse['skills']) { //Only get skills > lvl 0 for readability
-        if (skill['level'] > 0) {
-          _levels.add(skill['level']);
-          _names.add(skill['name']);
-          _skills.add(skill);
+        for (var project in _me['projects_users']) {
+          if ((project['cursus_ids'] as List).contains(course['cursus_id'])) {
+            _projects.add(project);
+          }
         }
-      }
-      for (var project in _me['projects_users']) {
-        if ((project['cursus_ids'] as List).contains(rCourse['cursus_id'])) {
-          _projects.add(project);
-        }
+        _courses.add({
+          'names': _names,
+          'levels': _levels,
+          'projects': _projects,
+          'course': course['cursus']
+        });
       }
     }
   }
@@ -177,18 +174,7 @@ class _UserState extends State<User> with AutomaticKeepAliveClientMixin<User> {
                                       mainAxisAlignment: MainAxisAlignment.center,
                                       crossAxisAlignment: CrossAxisAlignment.center,
                                       children: [
-                                        for (var cursus in _me['cursus_users'])
-                                          statWidget(cursus['cursus']['name'], 'lvl: ' + cursus['level'].toString())
-                                      ]
-                                  ),
-                                  const SizedBox(
-                                    height: 9.0,
-                                  ),
-                                  Row(
-                                      mainAxisAlignment: MainAxisAlignment.center,
-                                      crossAxisAlignment: CrossAxisAlignment.center,
-                                      children: [
-                                        statWidget("Correction point(s)", _me['correction_point'].toString()),
+                                        statWidget("Correction point(s)", _me['correction_point'].toString(), false),
                                         Expanded(
                                             child: IntrinsicHeight(
                                                 child: Row(
@@ -221,6 +207,59 @@ class _UserState extends State<User> with AutomaticKeepAliveClientMixin<User> {
                                                 )
                                             )
                                         )
+                                      ]
+                                  ),
+                                  const SizedBox(
+                                    height: 9.0,
+                                  ),
+                                  Row(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      crossAxisAlignment: CrossAxisAlignment.center,
+                                      children: [
+                                        for (int t = 0 ; t < _me['cursus_users'].length ; t++)
+                                          Expanded(
+                                              child: GestureDetector(
+                                                child: Column(
+                                                    mainAxisSize: MainAxisSize.min,
+                                                    children: [
+                                                      Flexible(
+                                                        child: Builder(
+                                                            builder: (context) {
+                                                              String str = _me['cursus_users'][t]['cursus']['name'] as String;
+                                                              return Text(str.useCorrectEllipsis(),
+                                                                maxLines: 1,
+                                                                style: TextStyle(
+                                                                    color: selected == t ? Colors.white : Colors.grey,
+                                                                    fontWeight: FontWeight.bold,
+                                                                    fontSize: 16
+                                                                ),
+                                                              );
+                                                            }
+                                                        ),
+                                                      ),
+                                                      const SizedBox(
+                                                        height: 3.0,
+                                                      ),
+                                                      Flexible(
+                                                          child: Builder(
+                                                              builder: (context) {
+                                                                String str = 'lvl: ' + _me['cursus_users'][t]['level'].toString();
+                                                                return Text(str.useCorrectEllipsis(),
+                                                                  maxLines: 1,
+                                                                  style: TextStyle(color: selected == t ? Colors.white : Colors.grey,
+                                                                      fontWeight: FontWeight.w400,
+                                                                      fontSize: 16
+                                                                  ),
+                                                                );
+                                                              }
+                                                          )
+                                                      ),
+                                                    ]
+                                                ),
+                                                onTap: () { setState(() { selected = t; }); },
+                                                behavior: HitTestBehavior.translucent,
+                                              )
+                                          )
                                       ]
                                   ),
                                   const SizedBox(
@@ -269,7 +308,7 @@ class _UserState extends State<User> with AutomaticKeepAliveClientMixin<User> {
                                         const SizedBox(
                                           height: 4,
                                         ),
-                                        for (var project in _projects)
+                                        for (var project in _courses[selected]['projects'])
                                           SizedBox(
                                               height: 25,
                                               child:
@@ -354,9 +393,10 @@ class _UserState extends State<User> with AutomaticKeepAliveClientMixin<User> {
     );
   }
 
-  List<BarChartGroupData> showingGroups() => List.generate(_names.length, (i) {
+  List<BarChartGroupData> showingGroups() => List.generate(_courses[selected]['names'].length, (i) {
 
-    return makeGroupData(i, _levels[i], isTouched: i == touchedIndex);
+    double level = _courses[selected]['levels'][i];
+    return makeGroupData(i, level.truncateToDecimalPlaces(2), isTouched: i == touchedIndex);
 
   });
 
@@ -366,7 +406,7 @@ class _UserState extends State<User> with AutomaticKeepAliveClientMixin<User> {
         touchTooltipData: BarTouchTooltipData(
             tooltipBgColor: Colors.blueGrey,
             getTooltipItem: (group, groupIndex, rod, rodIndex) {
-              String name = _names[group.x.toInt()];
+              String name = _courses[selected]['names'][group.x.toInt()];
               return BarTooltipItem(
                 name + '\n',
                 const TextStyle(
@@ -408,7 +448,7 @@ class _UserState extends State<User> with AutomaticKeepAliveClientMixin<User> {
               color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
           margin: 16,
           getTitles: (double value) {
-            return _names[value.toInt()][0].toUpperCase();
+            return _courses[selected]['names'][value.toInt()][0].toUpperCase();
           },
         ),
         leftTitles: SideTitles(

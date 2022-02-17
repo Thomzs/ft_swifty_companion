@@ -41,6 +41,7 @@ dependencies:
   flutter_radar_chart: ^0.2.0
   fl_chart: ^0.41.0
   flutter_launcher_icons: ^0.9.2
+  getwidget: ^2.0.4
 
 dev_dependencies:
   flutter_test:

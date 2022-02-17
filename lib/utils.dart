@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 
 extension StringExtension on String {
@@ -6,7 +8,12 @@ extension StringExtension on String {
   }
 }
 
-Widget statWidget(String title, String stat) {
+extension truncateOndoubles on double {
+  double truncateToDecimalPlaces(int fractionalDigits) => (this * pow(10,
+      fractionalDigits)).truncate() / pow(10, fractionalDigits);
+}
+
+Widget statWidget(String title, String stat, bool selected) { //Is selected ? text.color = black : text.color = white
   return Expanded(
       child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -14,8 +21,8 @@ Widget statWidget(String title, String stat) {
             Flexible(
               child: Text(title.useCorrectEllipsis(),
                 maxLines: 1,
-                style: const TextStyle(
-                    color: Colors.grey,
+                style: TextStyle(
+                    color: selected ? Colors.black26 : Colors.grey,
                     fontWeight: FontWeight.bold,
                     fontSize: 16
                 ),
@@ -27,8 +34,8 @@ Widget statWidget(String title, String stat) {
             Flexible(
               child: Text(stat.useCorrectEllipsis(),
                 maxLines: 1,
-                style: const TextStyle(
-                    color: Colors.grey,
+                style: TextStyle(
+                    color: selected ? Colors.black26 : Colors.grey,
                     fontWeight: FontWeight.w400,
                     fontSize: 16
                 ),
