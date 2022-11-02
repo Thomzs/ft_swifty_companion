@@ -83,8 +83,8 @@ class Storage {
 
 class ClientApi {
 
-  final clientId = 'c40f23829f08538d4fe58d099ce17155fbf5115478ac0bcb674b21837895cabd';
-  final clientSecret = 'ea598d6f22881a8ade6edd59f41d3e81dd1c8fab0a1e34002516dbd7ea9b3de1';
+  final clientId = 'XXXX';
+  final clientSecret = 'XXXX';
   final redirectUri = 'swifty://login/';
   final coolDown = 1;
   DateTime? _lastUpdate;
